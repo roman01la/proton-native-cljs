@@ -1,0 +1,10 @@
+{
+  "name": "proton-native-cljs",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "proton-native": "2.0.4",
+    "react": "16.12.0"
+  }
+}

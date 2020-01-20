@@ -1,0 +1,5 @@
+{:deps {org.clojure/clojure {:mvn/version "1.10.1"}
+        org.clojure/clojurescript {:mvn/version "1.10.597"}
+        uix.core {:git/url "https://github.com/roman01la/uix.git"
+                  :deps/root "core"
+                  :sha "27172a3a24e7ee099f6c7e2b137cf2965eb6538c"}}}
