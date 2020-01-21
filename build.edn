@@ -1,4 +1,0 @@
-{:main app.core
- :optimizations :advanced
- :infer-externs true
- :target :nodejs}

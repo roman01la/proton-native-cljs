@@ -4,3 +4,4 @@ node_modules
 .cpcache
 *.iml
 calculator
+.shadow-cljs

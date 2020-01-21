@@ -3,8 +3,14 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "dev": "shadow-cljs watch app"
+  },
   "dependencies": {
     "proton-native": "2.0.4",
     "react": "16.12.0"
+  },
+  "devDependencies": {
+    "shadow-cljs": "2.8.83"
   }
 }

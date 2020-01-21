@@ -1,0 +1,7 @@
+{:deps true
+ :builds {:app {:target :node-script
+                :main app.core/main
+                :output-dir "out"
+                :output-to "out/main.js"
+                :release {:compiler-options {:optimizations :advanced}}
+                :devtools {:after-load app.core/update!}}}}

@@ -2,8 +2,6 @@
   (:require [uix.core.alpha :as uix.core]
             [clojure.string :as str]))
 
-(set! *warn-on-infer* true)
-
 (def react (js/require "react"))
 (def proton-native (js/require "proton-native"))
 
@@ -197,9 +195,10 @@
 (defn root []
   (uix.core/as-element [app]))
 
-(defonce __init
-  (->> (.createElement react root)
-       (register-component! "app")))
+(defn main []
+  (register-component! "app" (.createElement react root)))
 
-(defn ^:after-load update! []
+(defn update!
+  "Hot reloading"
+  []
   (update-proxy! root))
