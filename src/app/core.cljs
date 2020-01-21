@@ -11,15 +11,6 @@
 (def Text (.-Text proton-native))
 (def TouchableOpacity (.-TouchableOpacity proton-native))
 
-(defn register-component! [component-name component-instance]
-  (.registerComponent
-    (.-AppRegistry proton-native)
-    component-name
-    component-instance))
-
-(defn update-proxy! [component]
-  (.updateProxy (.-AppRegistry proton-native) component))
-
 (def button-styles
   {:primary {:bg-color "#FC9E34"
              :text-color :white
@@ -187,18 +178,23 @@
               [buttons-group idx group])))]))
 
 (defn app []
-  [app-window {:width 450
-               :height 900
-               :background-color "#000"}
-   [calculator]])
+  [:> App
+   [:> Window {:style {:width 450
+                       :height 900
+                       :backgroundColor "#000"}}
+    [calculator]]])
 
-(defn root []
-  (uix.core/as-element [app]))
+(def root
+  (uix.core/create-class
+    {:prototype {:render #(uix.core/as-element (app))}}))
 
 (defn main []
-  (register-component! "app" (.createElement react root)))
+  (.registerComponent
+    (.-AppRegistry proton-native)
+    "app"
+    (.createElement react root)))
 
 (defn update!
   "Hot reloading"
   []
-  (update-proxy! root))
+  (.updateProxy (.-AppRegistry proton-native) root))
