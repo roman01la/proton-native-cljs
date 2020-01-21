@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "shadow-cljs watch app",
-    "build": "shadow-cljs release app && nexe out/main.js -o calculator"
+    "build": "shadow-cljs release app && yarn package",
+    "package": "nexe out/main.js -o calculator"
   },
   "dependencies": {
     "proton-native": "2.0.4",
