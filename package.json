@@ -4,13 +4,15 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "dev": "shadow-cljs watch app"
+    "dev": "shadow-cljs watch app",
+    "build": "shadow-cljs release app && nexe out/main.js -o calculator"
   },
   "dependencies": {
     "proton-native": "2.0.4",
     "react": "16.12.0"
   },
   "devDependencies": {
+    "nexe": "3.3.2",
     "shadow-cljs": "2.8.83"
   }
 }
