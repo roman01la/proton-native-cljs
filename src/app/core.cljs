@@ -184,6 +184,8 @@
                        :backgroundColor "#000"}}
     [calculator]]])
 
+;; For some reason root components should be React class
+;; to make hot-reloading work
 (def root
   (uix.core/create-class
     {:prototype {:render #(uix.core/as-element (app))}}))
