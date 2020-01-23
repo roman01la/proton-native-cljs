@@ -10,6 +10,8 @@
 (def View (.-View proton-native))
 (def Text (.-Text proton-native))
 (def TouchableOpacity (.-TouchableOpacity proton-native))
+(def Image (.-Image proton-native))
+(def TextInput (.-TextInput proton-native))
 
 (defn workspace-item [{:keys [on-press]}]
   [:> TouchableOpacity {:on-press on-press}
@@ -51,7 +53,11 @@
   [:> View {:style {:width 40
                     :height 40
                     :border-radius 7
-                    :background-color "#242424"}}])
+                    :background-color "#242424"}}
+   [:> Image {:source #js {:uri src}
+              :resize-mode :contain
+              :style {:width 40
+                      :height 40}}]])
 
 (defn message-item [{:keys [author posted-at body]}]
   [:> View {:style {:flex-direction :row
@@ -79,21 +85,29 @@
      ^{:key (:posted-at msg)}
      [message-item msg])])
 
-(def messages
-  [{:author {:name "Roman Liutikov"
-             :avatar ""}
-    :posted-at (js/Date.)
-    :body "Hello!"}
-   {:author {:name "Roman Liutikov"
-             :avatar ""}
-    :posted-at (js/Date. (- (js/Date.now) 1000))
-    :body "Hello!"}])
+(defn chat-input [{:keys [on-submit]}]
+  (let [value (uix.core/state "")
+        handle-change (uix.core/callback #(reset! value %) #js [])]
+    [:> View {:style {:height 140
+                      :background-color "#fff"}}
+     [:> TextInput {:value @value
+                    :on-change-text handle-change}]
+     [:> TouchableOpacity {:on-press #(do (on-submit @value)
+                                          (reset! value ""))}
+      [:> Text {:style {:background-color "#fff"
+                        :color "#000"}}
+       "Send"]]]))
 
 (defn chat-view []
-  [:> View {:style {:flex 1}}
-   [messages-view {:messages messages}]
-   [:> View {:style {:height 140
-                     :background-color "#fff"}}]])
+  (let [messages (uix.core/state [])
+        on-submit (uix.core/callback #(swap! messages conj {:author {:name "Roman Liutikov"
+                                                                     :avatar "../avatar.jpg"}
+                                                            :posted-at (js/Date.)
+                                                            :body %})
+                                     #js [])]
+    [:> View {:style {:flex 1}}
+     [messages-view {:messages @messages}]
+     [chat-input {:on-submit on-submit}]]))
 
 (defn app []
   [:> App
