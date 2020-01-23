@@ -11,178 +11,99 @@
 (def Text (.-Text proton-native))
 (def TouchableOpacity (.-TouchableOpacity proton-native))
 
-(def button-styles
-  {:primary {:bg-color "#FC9E34"
-             :text-color :white
-             :text-size 40}
-   :secondary {:bg-color "#A4A4A4"
-               :text-color "#010101"
-               :text-size 30}
-   :number {:bg-color "#363636"
-            :text-color :white
-            :text-size 40}})
+(defn workspace-item [{:keys [on-press]}]
+  [:> TouchableOpacity {:on-press on-press}
+   [:> View {:style {:width 40
+                     :height 40
+                     :border-radius 7
+                     :background-color "#fff"}}]])
 
-(defn button
-  [{:keys [bg-color text-color text-size
-           width start? on-press]}
-   child]
-  [:> TouchableOpacity
-   {:on-press on-press
-    :style {:background-color bg-color
-            :border-radius 40
-            :height 80
-            :width (or width 80)
-            :align-items (if start? :flex-start :center)
-            :justify-content :center}}
-   [:> Text {:style {:color text-color
-                     :font-size text-size
-                     :margin-left (if start? 25 0)}}
-    child]])
+(defn workspace-switcher []
+  [:> View {:style {:width 60
+                    :background-color "#242424"
+                    :align-items :center}}
+   (for [idx (range 3)]
+     ^{:key idx}
+     [:> View {:style {:margin-top 16}}
+      [workspace-item {:on-press identity}]])])
 
-(defn buttons-group [idx buttons]
+(defn channel-item [props text]
+  [:> View {:style {:padding-top 8
+                    :padding-bottom 8
+                    :padding-left 16}}
+   [:> Text {:style {:color "#fff"}}
+    (str "# " text)]])
+
+(defn sidebar-main [{:keys [channels]}]
+  [:> View {:style {:flex 1}}
+   (for [chan-name channels]
+     ^{:key chan-name}
+     [channel-item {} chan-name])])
+
+(defn sidebar []
+  [:> View {:style {:width 240
+                    :background-color "#000"
+                    :flex-direction :row}}
+   [workspace-switcher]
+   [sidebar-main {:channels ["dev" "product" "random" "general"]}]])
+
+(defn avatar [{:keys [src]}]
+  [:> View {:style {:width 40
+                    :height 40
+                    :border-radius 7
+                    :background-color "#242424"}}])
+
+(defn message-item [{:keys [author posted-at body]}]
+  [:> View {:style {:flex-direction :row
+                    :padding-left 16
+                    :padding-top 8
+                    :padding-bottom 8}}
+   [avatar {:src (:avatar author)}]
+   [:> View {:style {:margin-left 8}}
+    [:> View {:style {:flex-direction :row
+                      :align-items :flex-end}}
+     [:> Text {:style {:font-size 14
+                       :font-weight 600}}
+      (:name author)]
+     [:> Text {:style {:font-size 12
+                       :margin-left 8
+                       :color "#666"}}
+      (.toLocaleTimeString ^js/Date posted-at)]]
+    [:> Text {:style {:margin-top 8}}
+     body]]])
+
+(defn messages-view [{:keys [messages]}]
   [:> View {:style {:flex 1
-                    :flex-direction :row
-                    :justify-content :space-evenly}}
-   (map-indexed
-     (fn [jdx btn]
-       ^{:key (str jdx idx)}
-       [button (merge (button-styles (:type btn))
-                      (select-keys btn [:on-press :width :start?]))
-        (:text btn)])
-     buttons)])
+                    :background-color "#eee"}}
+   (for [msg messages]
+     ^{:key (:posted-at msg)}
+     [message-item msg])])
 
-(defn app-window [{:keys [width height background-color]} child]
-  [:> App
-   [:> Window {:style {:width width
-                       :height height
-                       :background-color background-color}}
-    child]])
+(def messages
+  [{:author {:name "Roman Liutikov"
+             :avatar ""}
+    :posted-at (js/Date.)
+    :body "Hello!"}
+   {:author {:name "Roman Liutikov"
+             :avatar ""}
+    :posted-at (js/Date. (- (js/Date.now) 1000))
+    :body "Hello!"}])
 
-(defn update-operator [state next-operator]
-  (let [{:keys [secondary primary operator]} @state
-        update-state! #(swap! state merge {:secondary 0 :primary %
-                                           :operator next-operator :changed? true})]
-    (case operator
-      + (update-state! (+ secondary primary))
-      - (update-state! (- secondary primary))
-      / (update-state! (/ secondary primary))
-      * (update-state! (* secondary primary))
-      (swap! state merge {:operator next-operator :changed? true}))))
-
-(defn add-digit [state digit]
-  (let [{:keys [changed? decimal? primary]} @state
-        update-state! #(swap! state merge %)]
-    (cond
-      changed? (if decimal?
-                 (update-state! {:secondary primary
-                                 :primary (/ digit 10)
-                                 :changed? false})
-                 (update-state! {:secondary primary
-                                 :primary digit
-                                 :changed? false}))
-      (not decimal?) (update-state! {:primary (+ digit (* 10 primary))})
-      decimal? (if-not (str/includes? (str primary) ".")
-                 (update-state! {:primary (-> (str primary "." digit)
-                                              js/parseFloat)})
-                 (update-state! {:primary (-> (str primary digit)
-                                              js/parseFloat)})))))
-
-(defn gen-buttons [state]
-  (let [on-press #(swap! state merge %)
-        {:keys [primary]} @state]
-    [[{:text "AC"
-       :type :secondary
-       :on-press #(on-press {:primary 0 :secondary 0 :operator ""
-                             :decimal? false :changed? false})}
-      {:text "+/-"
-       :type :secondary
-       :on-press #(on-press {:primary (- primary)})}
-      {:text "%"
-       :type :secondary
-       :on-press #(on-press {:primary (/ primary 100)})}
-      {:text "÷"
-       :type :primary
-       :on-press #(update-operator state '/)}]
-     [{:text "7"
-       :type :number
-       :on-press #(add-digit state 7)}
-      {:text "8"
-       :type :number
-       :on-press #(add-digit state 8)}
-      {:text "9"
-       :type :number
-       :on-press #(add-digit state 9)}
-      {:text "×"
-       :type :primary
-       :on-press #(update-operator state '*)}]
-     [{:text "4"
-       :type :number
-       :on-press #(add-digit state 4)}
-      {:text "2"
-       :type :number
-       :on-press #(add-digit state 2)}
-      {:text "6"
-       :type :number
-       :on-press #(add-digit state 6)}
-      {:text "-"
-       :type :primary
-       :on-press #(update-operator state '-)}]
-     [{:text "1"
-       :type :number
-       :on-press #(add-digit state 1)}
-      {:text "2"
-       :type :number
-       :on-press #(add-digit state 2)}
-      {:text "3"
-       :type :number
-       :on-press #(add-digit state 3)}
-      {:text "+"
-       :type :primary
-       :on-press #(update-operator state '+)}]
-     [{:text "0"
-       :type :number
-       :width 185
-       :start? true
-       :on-press #(add-digit state 0)}
-      {:text "."
-       :type :number
-       :on-press #(on-press {:decimal? true})}
-      {:text "3"
-       :type :number
-       :on-press #(add-digit state 3)}
-      {:text "="
-       :type :primary
-       :on-press #(update-operator state '+)}]]))
-
-(defn calculator []
-  (let [state (uix.core/state {:secondary 0 :primary 0 :operator ""
-                               :changed? false :decimal? false})]
-    [:<>
-     [:> View {:style {:width "100%"
-                       :height "30%"
-                       :justify-content :flex-end
-                       :align-items :flex-end}}
-      [:> Text {:style {:color :white
-                        :font-size 80
-                        :text-align :right
-                        :margin-right 35
-                        :margin-bottom 15
-                        :font-weight 200}}
-       (if (>= (count (str (:primary @state))) 7)
-         (.toExponential ^js/Number (:primary @state) 4)
-         (:primary @state))]]
-     (->> (gen-buttons state)
-          (map-indexed
-            (fn [idx group]
-              ^{:key idx}
-              [buttons-group idx group])))]))
+(defn chat-view []
+  [:> View {:style {:flex 1}}
+   [messages-view {:messages messages}]
+   [:> View {:style {:height 140
+                     :background-color "#fff"}}]])
 
 (defn app []
   [:> App
-   [:> Window {:style {:width 450
-                       :height 900
-                       :backgroundColor "#000"}}
-    [calculator]]])
+   [:> Window {:style {:width 900
+                       :height 600
+                       :backgroundColor "#fff"}}
+    [:> View {:style {:flex 1
+                      :flex-direction :row}}
+     [sidebar]
+     [chat-view]]]])
 
 ;; For some reason root components should be React class
 ;; to make hot-reloading work
