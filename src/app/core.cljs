@@ -55,10 +55,9 @@
 (defn avatar [{:keys [src]}]
   [:> View {:style {:width 40
                     :height 40
-                    :border-radius 7
-                    :background-color "#242424"}}
-   [:> Image {:source #js {:uri src}
-              :resize-mode :contain
+                    :border-radius 7}}
+   [:> Image {:source #js {:uri "https://cdn2.thecatapi.com/images/65a.png"}
+              :resize-mode :cover
               :style {:width 40
                       :height 40}}]])
 
