@@ -1,6 +1,6 @@
 (ns app.core
   (:require [uix.core.alpha :as uix.core]
-            [clojure.string :as str]))
+            [app.dev :refer [heads-up-display]]))
 
 (def react (js/require "react"))
 (def proton-native (js/require "proton-native"))
@@ -14,11 +14,14 @@
 (def TextInput (.-TextInput proton-native))
 
 (defn workspace-item [{:keys [on-press]}]
-  [:> TouchableOpacity {:on-press on-press}
-   [:> View {:style {:width 40
-                     :height 40
-                     :border-radius 7
-                     :background-color "#fff"}}]])
+  (let [hover? (uix.core/state false)]
+    [:> TouchableOpacity {:on-press on-press}
+     [:> View {:on-mouse-enter #(reset! hover? true)
+               :on-mouse-leave #(reset! hover? false)
+               :style {:width 40
+                       :height 40
+                       :border-radius 7
+                       :background-color (if @hover? "red" "#fff")}}]]))
 
 (defn workspace-switcher []
   [:> View {:style {:width 60
@@ -47,7 +50,7 @@
                     :background-color "#000"
                     :flex-direction :row}}
    [workspace-switcher]
-   [sidebar-main {:channels ["dev" "product" "random" "general"]}]])
+   [sidebar-main {:channels ["random" "general" "dev"]}]])
 
 (defn avatar [{:keys [src]}]
   [:> View {:style {:width 40
@@ -88,36 +91,40 @@
 (defn chat-input [{:keys [on-submit]}]
   (let [value (uix.core/state "")
         handle-change (uix.core/callback #(reset! value %) #js [])]
-    [:> View {:style {:height 140
+    [:> View {:style {:height 80
                       :background-color "#fff"}}
      [:> TextInput {:value @value
+                    :multiline true
                     :on-change-text handle-change}]
-     [:> TouchableOpacity {:on-press #(do (on-submit @value)
+     [:> TouchableOpacity {:style {:background-color "#fff"}
+                           :on-press #(do (on-submit @value)
                                           (reset! value ""))}
-      [:> Text {:style {:background-color "#fff"
-                        :color "#000"}}
+      [:> Text {:style {:color "#000"}}
        "Send"]]]))
 
 (defn chat-view []
   (let [messages (uix.core/state [])
-        on-submit (uix.core/callback #(swap! messages conj {:author {:name "Roman Liutikov"
-                                                                     :avatar "../avatar.jpg"}
-                                                            :posted-at (js/Date.)
-                                                            :body %})
-                                     #js [])]
+        on-submit #(swap! messages conj {:author {:name "Roman"
+                                                  :avatar "../avatar.jpg"}
+                                         :posted-at (js/Date.)
+                                         :body %})]
     [:> View {:style {:flex 1}}
      [messages-view {:messages @messages}]
      [chat-input {:on-submit on-submit}]]))
+
+(defn main-view []
+  [:> View {:style {:flex 1
+                    :flex-direction :row}}
+   [sidebar]
+   [chat-view]])
 
 (defn app []
   [:> App
    [:> Window {:style {:width 900
                        :height 600
                        :backgroundColor "#fff"}}
-    [:> View {:style {:flex 1
-                      :flex-direction :row}}
-     [sidebar]
-     [chat-view]]]])
+    [main-view]
+    [heads-up-display]]])
 
 ;; For some reason root components should be React class
 ;; to make hot-reloading work
